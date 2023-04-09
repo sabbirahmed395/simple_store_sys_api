@@ -44,5 +44,6 @@ Route::group(['middleware' => ['api', 'auth', 'role:employee']], function ($rout
 
     Route::patch('requisitions/{requisition}/approve', [RequisitionController::class, 'approve']);
     Route::patch('requisitions/{requisition}/issue', [RequisitionController::class, 'issue']);
+    Route::get('requisitions/{requisition}/issued-details', [RequisitionController::class, 'issuedDetails']);
 
 });

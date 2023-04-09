@@ -13,7 +13,8 @@ class Stock extends Model
         "item_id",
         "supplier_id",
         "price",
-        "quantity"
+        "quantity",
+        "issued"
     ];
     
     protected static function boot()

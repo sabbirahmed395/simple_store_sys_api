@@ -32,7 +32,8 @@
 									"key": "email",
 									"value": "{{auth_user}}",
 									"description": "admin",
-									"type": "text"
+									"type": "text",
+									"disabled": true
 								},
 								{
 									"key": "email",
@@ -50,8 +51,7 @@
 									"key": "email",
 									"value": "johnston.justine@example.org",
 									"description": "store executive",
-									"type": "default",
-									"disabled": true
+									"type": "default"
 								}
 							]
 						},
@@ -1511,6 +1511,49 @@
 								"requisitions",
 								"4",
 								"issue"
+							],
+							"query": [
+								{
+									"key": "per_page",
+									"value": "-1",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Issued Details",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "default"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/requisitions/8/issued-details",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"requisitions",
+								"8",
+								"issued-details"
 							],
 							"query": [
 								{

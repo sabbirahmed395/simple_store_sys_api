@@ -9,12 +9,23 @@ class RequisitionIssue extends Model
 {
     use HasFactory;
 
+    protected $fillable = [
+        // "requisition_id",
+        "stock_id",
+        "quantity"
+    ];
+
     public $table = "requisition_issue";
 
     public $timestamps = false;
 
     public function detail()
     {
-        $this->belongsTo(RequisitionDetail::class);
+        return $this->belongsTo(RequisitionDetail::class);
+    }
+
+    public function stock()
+    {
+        return $this->belongsTo(Stock::class);
     }
 }

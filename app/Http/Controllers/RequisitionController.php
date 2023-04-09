@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Item;
 use App\Models\Stock;
 use Illuminate\Http\Request;
 use App\Models\RequisitionMaster;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use App\Http\Resources\ItemResoruce;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Requests\ItemFormRequest;
@@ -181,9 +183,65 @@ class RequisitionController extends BaseController
         try {
             foreach ($requisition->details as $detail) {
                 $itemId = $detail->item_id;
-                $quantity = $detail->quantity;
+                $remaining = $quantity = $detail->quantity;
 
-                Stock::where('item_id', $itemId)->where('quantity', '>=', $quantity)->orderBy('id', 'asc')->first();
+                // check totol stock on particular item
+                $availableStock = Stock::where('item_id', $itemId)->sum('quantity');
+                $issuedStock = Stock::where('item_id', $itemId)->sum('issued');
+                $availableStock = $availableStock - $issuedStock;
+
+                if ($availableStock < $quantity) {
+                    throw new \Exception('Issue operation can not be possible due to insufficient stock');
+                }
+                
+                // dd('stock pass');
+
+                $stocks = Stock::select(['id', 'quantity', 'issued'])->where('item_id', $itemId)->orderBy('id', 'asc')->get()->toArray();
+
+                foreach ($stocks as $stock) {
+                    if ($stock['quantity'] - $stock['issued'] == 0) { // no available stock to be issued
+                        continue;
+                    }
+
+                    if ($remaining <= 0) break;
+
+                    $quantityToBeIssued = $remaining;
+                    Log::debug($quantityToBeIssued);
+
+                    // $remaininig = 150 - 120 = 30 -> next iteration | 
+                    // $remaininig = 120 - 120 = 0 -> break on next iteration |
+                    // $remaininig = 110 - 120 = -10 -> break on next iteration |
+                    $remaining = $remaining - ($stock['quantity'] - $stock['issued']);
+                    Log::debug("Remaining: " . $remaining);
+
+                    if ($remaining >= 0) {
+                        $quantityToBeIssued = $stock['quantity'] - $stock['issued'];
+                    }
+
+                    if ($remaining < 0) {
+                        $quantityToBeIssued = ($stock['quantity'] - $stock['issued']) + $remaining;
+                    }
+
+                    // create issue row
+                    $detail->issue()->create([
+                        'stock_id' => $stock['id'],
+                        'quantity' => $quantityToBeIssued
+                    ]);
+                    
+                    // update issued column on stock row
+                    $stockRow = Stock::find($stock['id']);
+                    Log::debug("Issued "  . $stockRow->issued);
+                    Log::debug("quantity to be issued "  . $quantityToBeIssued);
+                    $stockRow->issued = $stockRow->issued + $quantityToBeIssued;
+                    Log::debug("After set "  . $stockRow->issued);
+                    $stockRow->save();
+
+                    unset($stockRow);
+                }
+
+                $item = Item::find($itemId);
+                $item->stock = $item->stock - $quantity;
+                $item->save();
             }
 
             // issuing items
@@ -198,5 +256,21 @@ class RequisitionController extends BaseController
             
             return response()->json(["message" => "Something went wrong. " . $e->getMessage()], 500);
         }
+    }
+
+    public function issuedDetails(RequisitionMaster $requisition) {
+        if (!Auth::user()->hasRole('store executive')) {
+            throw new UnauthorizedException(403, "Only store executive can issue requisition");
+        }
+
+        if ($requisition->status != 'issued') {
+            throw new \Exception("Only issued requisition can be displayed");
+        }
+        
+        $requisition = RequisitionMaster::with(['user', 'details', 'issue', 'issue.stock', 'issue.stock.item'])->find($requisition->id);
+        // return $requisition->details;
+        // $requisition->load();
+
+        return new JsonResource($requisition);
     }
 }
