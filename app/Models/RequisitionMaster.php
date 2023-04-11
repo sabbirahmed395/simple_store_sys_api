@@ -18,6 +18,7 @@ class RequisitionMaster extends Model
     ];
 
     protected $appends = [
+        'created_at_prety',
         'item_count',
         'item_quantity'
     ];
@@ -37,6 +38,11 @@ class RequisitionMaster extends Model
         //         throw new \Exception('Only pending requisition can be updated.');
         //     }
         // });
+    }
+
+    public function getCreatedAtPretyAttribute()
+    {
+        return $this->created_at->format('d F Y h:i A');
     }
 
     public function getItemCountAttribute()

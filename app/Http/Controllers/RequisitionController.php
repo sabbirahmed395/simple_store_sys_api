@@ -190,8 +190,9 @@ class RequisitionController extends BaseController
                 $issuedStock = Stock::where('item_id', $itemId)->sum('issued');
                 $availableStock = $availableStock - $issuedStock;
 
+                $itemName = $detail->item->toArray()['name'];
                 if ($availableStock < $quantity) {
-                    throw new \Exception('Issue operation can not be possible due to insufficient stock');
+                    throw new \Exception("Issue operation can not be possible due to insufficient stock on `$itemName`");
                 }
                 
                 // dd('stock pass');

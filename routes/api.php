@@ -34,6 +34,8 @@ Route::group(['middleware' => ['api', 'auth', 'role:employee']], function ($rout
 
     Route::get('requisitions/my-requisition', [RequisitionController::class, 'myRequisition']);
 
+    Route::get('stocks/available', [StockController::class, 'availableStocks']);
+
     Route::apiResources([
         'users' => UserController::class,
         'items' => ItemController::class,
